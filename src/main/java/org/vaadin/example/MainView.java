@@ -1,59 +1,75 @@
 package org.vaadin.example;
 
-import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 
-/**
- * A sample Vaadin view class.
- * <p>
- * To implement a Vaadin view just extend any Vaadin component and use @Route
- * annotation to announce it in a URL as a Spring managed bean.
- * <p>
- * A new instance of this class is created for every new user and every browser
- * tab/window.
- * <p>
- * The main view contains a text field for getting the user name and a button
- * that shows a greeting message in a notification.
- */
-@Route
-public class MainView extends VerticalLayout {
+@Route("")
+@PageTitle("Home | My App")
+@CssImport("./themes/my-theme/styles.css")
+public class MainView extends AppLayout {
 
-    /**
-     * Construct a new Vaadin view.
-     * <p>
-     * Build the initial UI state for the user accessing the application.
-     *
-     * @param service
-     *            The message service. Automatically injected Spring managed bean.
-     */
-    public MainView(GreetService service) {
+    private final GreetService greetService;
 
-        // Use TextField for standard text input
-        TextField textField = new TextField("Your name");
-        textField.addClassName("bordered");
+    public MainView(GreetService greetService) {
+        this.greetService = greetService;
+        createDrawer();
+        createMainContent();
+    }
 
-        // Button click listeners can be defined as lambda expressions
-        Button button = new Button("Say hello", e -> {
-            add(new Paragraph(service.greet(textField.getValue())));
+    private void createDrawer() {
+        H1 appTitle = new H1("My App");
+        appTitle.addClassName("drawer-title");
+
+        RouterLink helloWorldLink = new RouterLink("Hello World", HelloWorldView.class);
+        helloWorldLink.addClassName("menu-item");
+        helloWorldLink.addComponentAsFirst(VaadinIcon.GLOBE.create());
+
+        RouterLink personelLink = new RouterLink("Personel", PersonelView.class);
+        personelLink.addClassName("menu-item");
+        personelLink.addComponentAsFirst(VaadinIcon.USERS.create());
+
+        RouterLink aboutLink = new RouterLink("About", AboutView.class);
+        aboutLink.addClassName("menu-item");
+        aboutLink.addComponentAsFirst(VaadinIcon.INFO_CIRCLE.create());
+
+        VerticalLayout drawerLayout = new VerticalLayout(appTitle, helloWorldLink,  personelLink, aboutLink);
+        drawerLayout.addClassName("drawer-menu");
+
+        addToDrawer(drawerLayout);
+    }
+
+    private void createMainContent() {
+        VerticalLayout content = new VerticalLayout();
+        content.addClassName("content");
+
+        TextField nameField = new TextField("Your name");
+        nameField.addClassName("input-field");
+
+        Label messageLabel = new Label("");
+        messageLabel.addClassName("message-label");
+
+        Button greetButton = new Button("Greet Me", event -> {
+            String message = greetService.greet(nameField.getValue());
+            messageLabel.setText(message);
         });
+        greetButton.addClassName("primary-button");
 
-        // Theme variants give you predefined extra styles for components.
-        // Example: Primary button has a more prominent look.
-        button.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        VerticalLayout inputContainer = new VerticalLayout(nameField, greetButton, messageLabel);
+        inputContainer.addClassName("centered-form");
+        inputContainer.setSizeFull();
 
-        // You can specify keyboard shortcuts for buttons.
-        // Example: Pressing enter in this view clicks the Button.
-        button.addClickShortcut(Key.ENTER);
-
-        // Use custom CSS classes to apply styling. This is defined in
-        // styles.css.
-        addClassName("centered-content");
-
-        add(textField, button);
+        content.add(inputContainer);
+        setContent(content);
     }
 }
